@@ -1,0 +1,69 @@
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local WAR_HORN_KEYS = {
+    ["War Horn"] = true,
+    ["WarHorn"] = true,
+}
+
+local COOLDOWNFIELDS = {
+    "Cooldown",
+    "AttackCooldown",
+    "UseDelay",
+    "SpinCooldown",
+    "HeavyAttackCooldown",
+    "AbilityCooldown",
+    "FireCooldown",
+}
+
+local function zeroCooldowns(item)
+    for _, field in ipairs(COOLDOWNFIELDS) do
+        if item[field] ~= nil then
+            item[field] = 0
+        end
+    end
+end
+
+local function patchWarHorn()
+    local modules = ReplicatedStorage:FindFirstChild("Modules")
+    if not modules then
+        return false
+    end
+
+    local itemLibScript = modules:FindFirstChild("ItemLibrary")
+    if not itemLibScript then
+        return false
+    end
+
+    local ok, ItemLibrary = pcall(require, itemLibScript)
+    if not ok or type(ItemLibrary) ~= "table" then
+        return false
+    end
+
+    local items = ItemLibrary.Items or ItemLibrary.Weapons or ItemLibrary.Utilities
+    if type(items) ~= "table" then
+        return false
+    end
+
+    local patched = false
+
+    for name, item in pairs(items) do
+        if type(item) == "table" then
+            local itemName = item.Name or name
+            if WAR_HORN_KEYS[name] or WAR_HORN_KEYS[itemName] then
+                zeroCooldowns(item)
+                patched = true
+                print("[Ez] cooldown removed for:", itemName)
+            end
+        end
+    end
+
+    return patched
+end
+
+patchWarHorn()
+
+task.spawn(function()
+    while task.wait(2) do
+        patchWarHorn()
+    end
+end)
